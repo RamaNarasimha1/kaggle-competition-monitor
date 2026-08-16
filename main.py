@@ -117,17 +117,23 @@ def run(dry_run: bool = False) -> None:
     logger.info("-" * 80)
 
     # ── 6. Deduplicate against seen storage ───────────────────────
-    min_score = int(os.environ.get("MIN_SCORE", str(MIN_NOTIFY_SCORE)))
     storage = SeenCompetitionStorage()
+
+    # Notify if dataset is <5 GB or unknown (0) — score still logged for info
+    MAX_DATASET_MB = float(os.environ.get("MAX_DATASET_MB", "5120"))  # 5 GB default
+
+    def _small_enough(c: dict) -> bool:
+        size = c.get("dataset_size_mb", 0.0)
+        return size <= 0 or size < MAX_DATASET_MB  # 0 = unknown, include it
 
     new_and_worthy = [
         c for c in scored
-        if should_notify(c) and c["total_score"] >= min_score and storage.is_new(c["id"])
+        if _small_enough(c) and storage.is_new(c["id"])
     ]
 
     logger.info(
-        "New competitions above threshold (%d pts): %d",
-        min_score,
+        "New competitions with dataset <%.0f MB: %d",
+        MAX_DATASET_MB,
         len(new_and_worthy),
     )
 
