@@ -180,7 +180,7 @@ class KaggleClient:
             search,
         )
 
-        raw_list = self._api.competitions_list(
+        raw_response = self._api.competitions_list(
             page=page,
             search=search,
             sort_by=sort_by,
@@ -188,9 +188,19 @@ class KaggleClient:
             group=group,
         )
 
+        # Kaggle SDK returns a plain list on some platforms and an
+        # ApiListCompetitionsResponse object (with .competitions) on others.
+        if isinstance(raw_response, list):
+            raw_list = raw_response
+        elif hasattr(raw_response, "competitions"):
+            raw_list = raw_response.competitions or []
+        else:
+            raw_list = list(raw_response) if raw_response else []
+
         competitions = [_normalize(c) for c in raw_list]
         logger.info("Fetched %d competitions.", len(competitions))
         return competitions
+
 
     def fetch_all_active(self, max_pages: int = 5, group: str = "general") -> list[dict]:
         """
