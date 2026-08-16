@@ -38,12 +38,18 @@ except ImportError:
 # ------------------------------------------------------------------
 # Logging setup  (before local imports so sub-module loggers work)
 # ------------------------------------------------------------------
+# Ensure stdout is UTF-8 on all platforms (Windows CMD, GitHub Actions, etc.)
+try:
+    if hasattr(sys.stdout, "reconfigure"):
+        sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+except Exception:
+    pass
+
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s  %(levelname)-8s  %(name)s  %(message)s",
     datefmt="%Y-%m-%d %H:%M:%S",
-    handlers=[logging.StreamHandler(open(sys.stdout.fileno(), mode="w", encoding="utf-8", closefd=False))],
-
+    stream=sys.stdout,
 )
 logger = logging.getLogger("main")
 

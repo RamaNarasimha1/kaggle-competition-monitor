@@ -43,7 +43,10 @@ jobs:
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
           MAX_PAGES: "3"
           MIN_SCORE: "75"
+          PYTHONUTF8: "1"
+          PYTHONIOENCODING: "utf-8"
         run: python main.py
+
 
       - name: Commit updated seen_competitions.json
         run: |
