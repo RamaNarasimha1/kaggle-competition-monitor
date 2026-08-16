@@ -33,16 +33,26 @@ class SeenCompetitionStorage:
     def _load(self) -> None:
         if self._path.exists():
             try:
-                data = json.loads(self._path.read_text(encoding="utf-8"))
-                self._seen = set(data.get("competitions", []))
+                # Try UTF-8 first; fall back to utf-8-sig (handles Windows BOM)
+                try:
+                    text = self._path.read_text(encoding="utf-8")
+                except UnicodeDecodeError:
+                    text = self._path.read_text(encoding="utf-8-sig")
+                data = json.loads(text)
+                # Support both plain list [] and {"competitions": [...]}
+                if isinstance(data, list):
+                    self._seen = set(data)
+                else:
+                    self._seen = set(data.get("competitions", []))
                 logger.info(
                     "Loaded %d seen competition IDs from %s",
                     len(self._seen),
                     self._path,
                 )
-            except (json.JSONDecodeError, OSError) as exc:
-                logger.error("Failed to load seen competitions: %s", exc)
+            except (json.JSONDecodeError, OSError, UnicodeDecodeError) as exc:
+                logger.warning("Could not load seen competitions (%s) — starting fresh.", exc)
                 self._seen = set()
+
         else:
             logger.info("No seen-competitions file found at %s – starting fresh.", self._path)
             self._seen = set()
