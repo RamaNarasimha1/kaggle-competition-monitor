@@ -113,9 +113,19 @@ def _normalize(raw: Any) -> dict:
     deadline_str = (deadline_raw.isoformat() + "+00:00") if deadline_raw else ""
     reward: str = str(getattr(raw, "reward", "") or "")
     description: str = str(getattr(raw, "description", "") or "")
-    teams: int = int(getattr(raw, "teamCount", 0) or 0)
+
+    # New SDK uses snake_case; old SDK uses camelCase — try both
+    teams: int = int(
+        getattr(raw, "team_count", None)        # new SDK (Linux)
+        or getattr(raw, "teamCount", None)       # old SDK (Windows)
+        or 0
+    )
     category: str = str(getattr(raw, "category", "") or "")
-    evaluation_metric: str = str(getattr(raw, "evaluationMetric", "") or "")
+    evaluation_metric: str = str(
+        getattr(raw, "evaluation_metric", None)  # new SDK (Linux)
+        or getattr(raw, "evaluationMetric", None) # old SDK (Windows)
+        or ""
+    )
 
     return {
         "id": ref,
